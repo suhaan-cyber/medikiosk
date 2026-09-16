@@ -25,6 +25,18 @@ app.add_middleware(
     max_age=3600,
 )
 
+@app.options("/{full_path:path}")
+async def preflight_handler(full_path: str):
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "https://medikiosk-flax-gamma.vercel.app",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Access-Control-Max-Age": "3600",
+        },
+    )
+    
 # ═════════════════════ HELPERS ═════════════════════
 def uid(p=""):
     return p + "".join(random.choices(string.ascii_lowercase + string.digits, k=13))
