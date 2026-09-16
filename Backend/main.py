@@ -25,6 +25,10 @@ app.add_middleware(
     max_age=3600,
 )
 
+# ── Preflight handler (helps some proxies) ──
+@app.options("/{full_path:path}")
+async def preflight(full_path: str):
+    return {"ok": True}
 
 # ═════════════════════ HELPERS ═════════════════════
 def uid(p=""):
