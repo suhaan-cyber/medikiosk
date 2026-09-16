@@ -18,7 +18,7 @@ app = FastAPI(title="MEDIKOISK API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://medikiosk-flax-gamma.vercel.app",
+        "https://medikiosk-aethon1.vercel.app/",
         "http://localhost:5500" # keep for local testing
     ],
     allow_credentials=False,
