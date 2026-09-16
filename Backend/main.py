@@ -19,7 +19,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://medikiosk-flax-gamma.vercel.app",
-        "http://localhost:5500" // Keep this for local testing
+        "http://localhost:5500" # keep for local testing
     ],
     allow_credentials=False,
     allow_methods=["*"],
