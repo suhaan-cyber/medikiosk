@@ -1994,14 +1994,11 @@ function reportCardHTML(r){
     '<div class="row"><span class="pill mute">'+esc(String(r.doctorName||'').replace('Dr. ','Dr '))+'</span><span class="pill brand">View</span></div></div></article>';
 }
 function reportCardManageHTML(r){
-  const isMine = r.uploadedBy !== 'patient';
   return '<div class="rep-wrap">'+reportCardHTML(r)+
-    (isMine ? '<div class="rep-actions">'+
+    '<div class="rep-actions">'+
       '<button class="btn btn-soft btn-xs" onclick="window.__editReport(\''+r.id+'\')"><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> Edit</button>'+
       '<button class="btn btn-ghost btn-xs" style="color:var(--bad)" onclick="window.__deleteReport(\''+r.id+'\')"><svg class="icon" style="width:12px;height:12px"><use href="#i-trash"/></svg> Delete</button>'+
-    '</div>' : '<div class="rep-actions">'+
-      '<button class="btn btn-soft btn-xs" onclick="window.__viewReport(\''+r.id+'\')"><svg class="icon" style="width:12px;height:12px"><use href="#i-eye"/></svg> View only</button>'+
-    '</div>')+
+    '</div>'+
   '</div>';
 }
 
