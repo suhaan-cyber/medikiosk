@@ -1,6 +1,6 @@
 /* MEDIKOISK — Service Worker for PWA */
 
-const CACHE_NAME = 'medikoisk-v4';
+const CACHE_NAME = 'medikoisk-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -36,7 +36,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ═══ Fetch — smart caching for PWA + network-only for API ═══
+// ═══ Fetch ═══
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -47,7 +47,7 @@ self.addEventListener('fetch', (event) => {
   // Don't intercept cross-origin requests (backend API calls)
   if (url.origin !== self.location.origin) return;
 
-  // Don't cache API paths — these always go to the network
+  // Don't cache API paths
   if (
     url.pathname.startsWith('/auth') ||
     url.pathname.startsWith('/bootstrap') ||
@@ -63,21 +63,28 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/ai')
   ) return;
 
-  // ── CRITICAL: Handle navigation requests (page loads) ──
-  // This makes routes like /#/home, /#/ai, /#/appointments work correctly
-  // by always serving index.html from the cache. Without this, Android PWAs
-  // throw ERR_FAILED because there's no actual /#/home file on the server.
+  // ── CRITICAL FIX: Network-First for navigation ──
+  // This prevents ERR_FAILED. It always tries to fetch the page from
+  // Cloudflare first. Only if the network fails (offline) does it
+  // fall back to serving index.html from the cache.
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match('./index.html').then((cached) => {
-        if (cached) return cached;
-        return fetch(request).catch(() => caches.match('./index.html'));
-      })
+      fetch(request)
+        .then((response) => {
+          // If we got a valid response, save it to the cache and return it
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => {
+          // Network failed, serve index.html from cache
+          return caches.match('./index.html');
+        })
     );
     return;
   }
 
-  // ── Cache-first strategy for other static assets ──
+  // Cache-first for other static assets (CSS, JS, images)
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
@@ -88,12 +95,6 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return response;
-        })
-        .catch(() => {
-          // Last-resort fallback for navigation-like requests
-          if (request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
         });
     })
   );
