@@ -5979,14 +5979,25 @@ function initAppShell(){
     });
   });
 
-  $$('#avatarDd [data-open-cr]').forEach(btn => {
-    btn.addEventListener('click', () => {
+   // Handle all navigation links in the avatar dropdown
+  $$('#avatarDd .dd-link').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       closeDds();
-      navigate('profile');
-      setTimeout(() => { if (window.__newChangeRequest) window.__newChangeRequest(); }, 200);
+      const goto = btn.dataset.goto;
+      const openCr = btn.dataset.openCr;
+
+      if (goto) {
+        // Small delay ensures the dropdown closes smoothly before navigation
+        setTimeout(() => {
+          navigate(goto);
+          if (openCr && window.__newChangeRequest) {
+            window.__newChangeRequest();
+          }
+        }, 100);
+      }
     });
   });
-
   const search = $('#globalSearch');
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); search.focus(); search.select(); }
