@@ -17,12 +17,13 @@ app = FastAPI(title="MEDIKOISK API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://medikiosk.suhaan-sameer-gadda.workers.dev",
+        "http://localhost:5500",
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
 )
 
 
