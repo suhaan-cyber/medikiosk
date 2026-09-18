@@ -5761,6 +5761,21 @@ window.__viewPatientFull = function(pid){
   const prakLabel = lastAyush ? (PRAKRITI_OPTIONS.find(x => x.id === lastAyush.prakriti) || {}).label : null;
   const agniLabel = lastAyush ? (AGNI_OPTIONS.find(g => g.id === lastAyush.agni) || {}).label : null;
 
+ window.__viewPatientFull = function(pid){
+  const p = Data.findUser(pid);
+  if (!p) return;
+  const doctor = Session.current();
+  const isAyushDoctor = doctor && (doctor.ayush || (findDept(doctor.dept) && findDept(doctor.dept).ayush));
+  const apts = Data.appointments().filter(a => a.patientId === pid).sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  const ayushApts = apts.filter(a => a.ayush);
+  const rxs = Data.prescriptions().filter(r => r.patientId === pid).sort((a,b) => b.createdAt - a.createdAt);
+  const reps = Data.reports().filter(r => r.patientId === pid);
+  const pays = Data.payments().filter(r => r.patientId === pid && r.status === 'success');
+  const lastRx = rxs[0];
+  const lastAyush = ayushApts[0];
+  const prakLabel = lastAyush ? (PRAKRITI_OPTIONS.find(x => x.id === lastAyush.prakriti) || {}).label : null;
+  const agniLabel = lastAyush ? (AGNI_OPTIONS.find(g => g.id === lastAyush.agni) || {}).label : null;
+
   mountModal('<div class="modal-back"><div class="modal wide">' +
     '<div class="modal-head"><div class="t"><h3>'+esc(p.name)+'</h3>' +
     '<p>'+esc(p.patientId||'')+' · '+esc(p.email)+'</p></div>' +
@@ -5796,11 +5811,31 @@ window.__viewPatientFull = function(pid){
         : '<div style="font-size:12.5px;color:var(--muted)">No visits recorded.</div>') +
       '</div>' +
       (reps.length ? '<div style="margin-top:16px"><strong style="font-size:12.5px;display:block;margin-bottom:9px">Reports</strong>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:7px">'+reps.map(r => '<button class="btn btn-ghost btn-sm" onclick="closeModal(true);setTimeout(()=>window.__viewReport(\''+r.id+'\'),250)"><svg class="icon icon-sm" style="width:12px;height:12px"><use href="#i-file"/></svg> '+esc(r.title)+'</button>').join('')+'</div></div>' : '') +
+        '<div style="display:flex;flex-wrap:wrap;gap:7px">'+reps.map(r => '<button type="button" class="btn btn-ghost btn-sm" data-rep-id="'+attr(r.id)+'"><svg class="icon icon-sm" style="width:12px;height:12px"><use href="#i-file"/></svg> '+esc(r.title)+'</button>').join('')+'</div></div>' : '') +
     '</div>' +
     '<div class="modal-foot"><button class="btn btn-ghost" data-close>Close</button>' +
-    '<button class="btn '+(isAyushDoctor?'btn-ayush':'btn-primary')+'" onclick="closeModal(true);setTimeout(()=>window.__rxForPatient(\''+pid+'\'),250)"><svg class="icon icon-sm"><use href="'+(isAyushDoctor?'#i-leaf':'#i-pill')+'"/></svg> Write '+(isAyushDoctor?'AYUSH ':'')+'Prescription</button></div>' +
-  '</div></div>');
+    '<button class="btn '+(isAyushDoctor?'btn-ayush':'btn-primary')+'" id="writeRxBtn"><svg class="icon icon-sm"><use href="'+(isAyushDoctor?'#i-leaf':'#i-pill')+'"/></svg> Write '+(isAyushDoctor?'AYUSH ':'')+'Prescription</button></div>' +
+  '</div></div>', () => {
+    // Attach event listener for report buttons
+    $$('[data-rep-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const repId = btn.dataset.repId;
+        closeModal(true);
+        setTimeout(() => window.__viewReport(repId), 400);
+      });
+    });
+
+    // Attach event listener for Write Prescription button
+    const rxBtn = document.getElementById('writeRxBtn');
+    if (rxBtn) {
+      rxBtn.addEventListener('click', () => {
+        closeModal(true);
+        setTimeout(() => window.__rxForPatient(pid), 400);
+      });
+    }
+  });
+};
+window.__viewPatient = window.__viewPatientFull;
 };
 window.__viewPatient = window.__viewPatientFull;
 
