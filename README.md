@@ -221,6 +221,10 @@ MIT — see LICENSE file.
 [SEED] Doctor : priya.sharma@medikoisk.health / doctor123
 [SEED] AYUSH  : vaidya.anjali.verma@medikoisk.ayush / doctor123
 
+test it
+🚀 **Live Demo:** [https://medikiosk.suhaan-sameer-gadda.workers.dev](https://medikiosk.suhaan-sameer-gadda.workers.dev)
+📚 **API Docs:** [https://medikiosk-6.onrender.com/docs](https://medikiosk-6.onrender.com/docs)
+
 
 
 
