@@ -2,7 +2,7 @@
   "name": "MEDIKOISK — Connected Health Intelligence",
   "short_name": "MEDIKOISK",
   "description": "A full-stack digital health platform for patients and doctors, with AYUSH mode.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -30,17 +30,17 @@
       "name": "AI Assistant",
       "short_name": "AI",
       "description": "Ask the AI health assistant",
-      "url": "./index.html#/ai"
+      "url": "./#/ai"
     },
     {
       "name": "My Appointments",
       "short_name": "Appointments",
-      "url": "./index.html#/appointments"
+      "url": "./#/appointments"
     },
     {
       "name": "AYUSH Mode",
       "short_name": "AYUSH",
-      "url": "./index.html#/ayush-home"
+      "url": "./#/ayush-home"
     }
   ]
 }
