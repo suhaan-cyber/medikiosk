@@ -1,6 +1,6 @@
 /* MEDIKOISK — Service Worker for PWA */
 
-const CACHE_NAME = 'medikoisk-v4';
+const CACHE_NAME = 'medikoisk-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -36,7 +36,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ═══ Fetch — smart caching for PWA + network-only for API ═══
+// ═══ Fetch — cache-first for static, network-only for API ═══
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -44,10 +44,10 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Don't intercept cross-origin requests (backend API calls to Render)
+  // Don't intercept cross-origin requests (backend API calls)
   if (url.origin !== self.location.origin) return;
 
-  // Don't cache API paths — these always go to the network
+  // Don't cache API paths
   if (
     url.pathname.startsWith('/auth') ||
     url.pathname.startsWith('/bootstrap') ||
@@ -63,24 +63,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/ai')
   ) return;
 
-  // ── CRITICAL: Handle ALL navigation requests ──
-  // This makes start_url (./) and all shortcuts work:
-  //   ./#/ai, ./#/appointments, ./#/ayush-home
-  //   ./index.html#/ai, ./index.html#/appointments, ./index.html#/ayush-home
-  // The service worker serves index.html from cache, and the SPA's own
-  // JS routing (location.hash) renders the correct view. This prevents
-  // the ERR_FAILED error on Android PWAs.
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      caches.match('./index.html').then((cached) => {
-        if (cached) return cached;
-        return fetch(request).catch(() => caches.match('./index.html'));
-      })
-    );
-    return;
-  }
-
-  // ── Cache-first strategy for other static assets ──
+  // Cache-first for static assets
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
@@ -93,7 +76,6 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Last-resort fallback for navigation-like requests
           if (request.mode === 'navigate') {
             return caches.match('./index.html');
           }
