@@ -1,6 +1,6 @@
 /* MEDIKOISK — Service Worker for PWA */
 
-const CACHE_NAME = 'medikoisk-v6';
+const CACHE_NAME = 'medikoisk-v1';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -36,7 +36,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ═══ Fetch — smart caching for PWA + network-only for API ═══
+// ═══ Fetch — cache-first for static, network-only for API ═══
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -63,19 +63,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/ai')
   ) return;
 
-  // ── CRITICAL FIX: Handle all page navigations by serving index.html ──
-  // This prevents ERR_FAILED whether the PWA requests "/" or "/index.html"
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      caches.match('./index.html').then((cached) => {
-        if (cached) return cached;
-        return fetch(request).catch(() => caches.match('./index.html'));
-      })
-    );
-    return;
-  }
-
-  // Cache-first for other static assets
+  // Cache-first for static assets
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
