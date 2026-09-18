@@ -3350,7 +3350,8 @@ function openRxModal(patientId, doctor){
 function viewUpload(user){
   const myPats = Array.from(new Set(Data.appointments().filter(a => a.doctorId === user.id).map(a => a.patientId)));
   const pats = myPats.map(id => Data.findUser(id)).filter(Boolean);
-const myReports = Data.reports().filter(r => r.doctorId === user.id || (r.uploadedBy === 'patient' && myPats.includes(r.patientId)));
+const doctorReports = Data.reports().filter(r => r.doctorId === user.id);
+const patientReports = Data.reports().filter(r => r.uploadedBy === 'patient' && myPats.includes(r.patientId));
   return `
   <div class="sec-head reveal"><div><h3 style="font-size:22px">Upload Reports</h3><p>Attach lab reports, prescription images and follow-up scans for your patients</p></div></div>
   <section class="card panel reveal">
@@ -3372,9 +3373,14 @@ const myReports = Data.reports().filter(r => r.doctorId === user.id || (r.upload
       <button class="btn btn-primary btn-block" id="upSave" style="margin-top:16px"><svg class="icon icon-sm"><use href="#i-check"/></svg> Save report to patient records</button>
     ` : emptyState('i-users','No patients yet','Patients who book appointments with you will appear here.')}
   </section>
+   <section class="card panel reveal">
+    <div class="panel-head"><h3><svg class="icon"><use href="#i-file"/></svg> Reports you uploaded (${doctorReports.length})</h3></div>
+    ${doctorReports.length ? '<div class="rep-grid">'+doctorReports.map(r => reportCardManageHTML(r)).join('')+'</div>' : emptyState('i-file','No reports uploaded yet','Uploads you add will appear here.')}
+  </section>
+
   <section class="card panel reveal">
-    <div class="panel-head"><h3><svg class="icon"><use href="#i-file"/></svg> Your uploaded reports (${myReports.length})</h3></div>
-    ${myReports.length ? '<div class="rep-grid">'+myReports.map(r => reportCardManageHTML(r)).join('')+'</div>' : emptyState('i-file','No reports uploaded yet','Uploads you add will appear here.')}
+    <div class="panel-head"><h3><svg class="icon" style="color:var(--info)"><use href="#i-users"/></svg> Reports uploaded by your patients (${patientReports.length})</h3></div>
+    ${patientReports.length ? '<div class="rep-grid">'+patientReports.map(r => reportCardHTML(r)).join('')+'</div>' : emptyState('i-users','No patient reports yet','Reports your patients upload will appear here once they book an appointment with you.')}
   </section>
   <footer class="foot"><span>© ${new Date().getFullYear()} MEDIKOISK · Clinician Portal</span></footer>`;
 }
