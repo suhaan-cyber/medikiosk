@@ -44,7 +44,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Don't intercept cross-origin requests (backend API calls)
+  // Don't intercept cross-origin requests (backend API calls to Render)
   if (url.origin !== self.location.origin) return;
 
   // Don't cache API paths — these always go to the network
@@ -63,10 +63,13 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/ai')
   ) return;
 
-  // ── CRITICAL: Handle navigation requests (page loads) ──
-  // This makes routes like /#/home, /#/ai, /#/appointments work correctly
-  // by always serving index.html from the cache. Without this, Android PWAs
-  // throw ERR_FAILED because there's no actual /#/home file on the server.
+  // ── CRITICAL: Handle ALL navigation requests ──
+  // This makes start_url (./) and all shortcuts work:
+  //   ./#/ai, ./#/appointments, ./#/ayush-home
+  //   ./index.html#/ai, ./index.html#/appointments, ./index.html#/ayush-home
+  // The service worker serves index.html from cache, and the SPA's own
+  // JS routing (location.hash) renders the correct view. This prevents
+  // the ERR_FAILED error on Android PWAs.
   if (request.mode === 'navigate') {
     event.respondWith(
       caches.match('./index.html').then((cached) => {
