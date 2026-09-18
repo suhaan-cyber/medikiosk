@@ -1,46 +1,100 @@
-{
-  "name": "MEDIKOISK — Connected Health Intelligence",
-  "short_name": "MEDIKOISK",
-  "description": "A full-stack digital health platform for patients and doctors, with AYUSH mode.",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#f4f6fc",
-  "theme_color": "#4f46e5",
-  "categories": ["health", "medical", "productivity"],
-  "lang": "en",
-  "dir": "ltr",
-  "icons": [
-    {
-      "src": "./icon.png",
-      "sizes": "192x192 512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "AI Assistant",
-      "short_name": "AI",
-      "description": "Ask the AI health assistant",
-      "url": "./#/ai"
-    },
-    {
-      "name": "My Appointments",
-      "short_name": "Appointments",
-      "url": "./#/appointments"
-    },
-    {
-      "name": "AYUSH Mode",
-      "short_name": "AYUSH",
-      "url": "./#/ayush-home"
-    }
-  ]
-}
+/* MEDIKOISK — Service Worker for PWA */
+
+const CACHE_NAME = 'medikoisk-v4';
+const STATIC_ASSETS = [
+  './',
+  './index.html',
+  './api.js',
+  './manifest.json',
+  './icon.svg',
+  './icon.png',
+];
+
+// ═══ Install — cache static assets ═══
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installing…');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch((err) => console.warn('[SW] Cache addAll failed:', err))
+  );
+  self.skipWaiting();
+});
+
+// ═══ Activate — clean up old caches ═══
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating…');
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_NAME)
+          .map((k) => caches.delete(k))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+// ═══ Fetch — smart caching for PWA + network-only for API ═══
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  // Don't intercept cross-origin requests (backend API calls)
+  if (url.origin !== self.location.origin) return;
+
+  // Don't cache API paths — these always go to the network
+  if (
+    url.pathname.startsWith('/auth') ||
+    url.pathname.startsWith('/bootstrap') ||
+    url.pathname.startsWith('/appointments') ||
+    url.pathname.startsWith('/prescriptions') ||
+    url.pathname.startsWith('/reports') ||
+    url.pathname.startsWith('/payments') ||
+    url.pathname.startsWith('/vitals') ||
+    url.pathname.startsWith('/change-requests') ||
+    url.pathname.startsWith('/timeline') ||
+    url.pathname.startsWith('/chats') ||
+    url.pathname.startsWith('/users') ||
+    url.pathname.startsWith('/ai')
+  ) return;
+
+  // ── CRITICAL: Handle navigation requests (page loads) ──
+  // This makes routes like /#/home, /#/ai, /#/appointments work correctly
+  // by always serving index.html from the cache. Without this, Android PWAs
+  // throw ERR_FAILED because there's no actual /#/home file on the server.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('./index.html').then((cached) => {
+        if (cached) return cached;
+        return fetch(request).catch(() => caches.match('./index.html'));
+      })
+    );
+    return;
+  }
+
+  // ── Cache-first strategy for other static assets ──
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request)
+        .then((response) => {
+          if (response.ok && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Last-resort fallback for navigation-like requests
+          if (request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+    })
+  );
+});
