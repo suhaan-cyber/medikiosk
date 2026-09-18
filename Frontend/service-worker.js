@@ -1,14 +1,14 @@
 /* MEDIKOISK — Service Worker for PWA */
 
-const CACHE_NAME = 'medikoisk-v1';
+const CACHE_NAME = 'medikoisk-v3';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './api.js',
   './manifest.json',
   './icon.svg',
+  './icon.png',
 ];
-
 // ═══ Install — cache static assets ═══
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing…');
